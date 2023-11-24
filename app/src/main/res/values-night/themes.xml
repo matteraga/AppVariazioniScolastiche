@@ -1,0 +1,18 @@
+<resources xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <style name="Base.Theme.AppVariazioniScolastiche" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary_color_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/accent_color</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <item name="switchStyle">@style/Theme.AppVariazioniScolastiche.Switch</item>
+    </style>
+
+    <style name="Theme.AppVariazioniScolastiche" parent="Base.Theme.AppVariazioniScolastiche" />
+
+    <style name="Theme.AppVariazioniScolastiche.Switch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="trackTint">@color/primary_color_light</item>
+        <item name="thumbTint">@color/switch_thumb_selector</item>
+    </style>
+</resources>

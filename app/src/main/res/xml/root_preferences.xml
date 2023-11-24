@@ -1,0 +1,75 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="Variazioni">
+
+        <me.matteraga.appvariazioniscolastiche.preferences.DaysListPreference
+            app:entries="@array/days"
+            app:iconSpaceReserved="false"
+            app:key="open"
+            app:title="Apri pdf variazioni" />
+
+        <me.matteraga.appvariazioniscolastiche.preferences.DaysListPreference
+            app:entries="@array/days"
+            app:iconSpaceReserved="false"
+            app:key="manualCheck"
+            app:title="Controlla variazioni" />
+
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:key="check"
+            app:summary="Controlla periodicamente se ci sono variazioni per il giorno seguente all'orario specificato"
+            app:title="Controlla variazioni" />
+
+        <EditTextPreference
+            app:defaultValue="1A"
+            app:iconSpaceReserved="false"
+            app:key="schoolClass"
+            app:title="Classe"
+            app:useSimpleSummaryProvider="true" />
+
+        <SeekBarPreference
+            android:max="24"
+            app:defaultValue="19"
+            app:dependency="check"
+            app:iconSpaceReserved="false"
+            app:key="time"
+            app:min="1"
+            app:showSeekBarValue="true"
+            app:summary="A che ora saranno controllate le variazioni"
+            app:title="Ora del controllo" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="Permessi">
+
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="notify"
+            app:summary="Negato"
+            app:title="Notifiche" />
+
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="files"
+            app:summary="Negato"
+            app:title="Download di file" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="File">
+
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="delete"
+            app:summary="Elimina tutti i pdf scaricati dall'app"
+            app:title="Elimina PDF" />
+
+    </PreferenceCategory>
+</PreferenceScreen>
