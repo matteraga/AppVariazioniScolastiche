@@ -7,7 +7,10 @@ import androidx.preference.PreferenceManager
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.itextpdf.text.BaseColor
+import com.itextpdf.text.pdf.PdfGState
 import com.itextpdf.text.pdf.PdfReader
+import com.itextpdf.text.pdf.PdfStamper
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
 import me.matteraga.appvariazioniscolastiche.R
 import me.matteraga.appvariazioniscolastiche.utilities.NotificationUtils
@@ -16,6 +19,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
+import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -117,45 +121,67 @@ class CheckChangesWorker(
             val bytes = pdfUrlResponse.body?.bytes() ?: byteArrayOf()
             pdfUrlResponse.close()
 
-            // Salva il pdf
-            val uri = storageUtils.save(bytes, fileName, date.toString())
-
             // Controlla se ci sono variazioni
-            var notified = false
-            val pdfReader = PdfReader(bytes)
-            val regex =
-                Regex("""^${schoolClass}$""", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
-            for (pag in 0 until pdfReader.numberOfPages) {
-                val content = PdfTextExtractor.getTextFromPage(pdfReader, pag + 1)
-                if (regex.containsMatchIn(content)) {
-                    if (uri != null) {
-                        notificationUtils.sendPdfNotification(
-                            uri,
-                            "Variazioni",
-                            "Ci sono variazioni."
-                        )
-                    } else {
-                        notificationUtils.sendBrowserNotification(
-                            pdfUrl,
-                            "Variazioni",
-                            "Ci sono variazioni. Errore salvataggio variazioni."
-                        )
+            var changes = false
+            val reader = PdfReader(bytes)
+            val stream = ByteArrayOutputStream()
+            val stamper = PdfStamper(reader, stream)
+            val regex = Regex(
+                """^[1-5][A-Za-z]{1,3}$""", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE)
+            )
+            for (pag in 1 until reader.numberOfPages + 1) {
+                val content = PdfTextExtractor.getTextFromPage(reader, pag)
+                val schoolClasses = regex.findAll(content).map {
+                    it.value
+                }.toList()
+
+                val canvas = stamper.getOverContent(pag)
+                for (schoolClass in schoolClasses.indices) {
+                    if (schoolClasses[schoolClass].equals(this.schoolClass, true)) {
+                        changes = true
+                        // Evidenzia la riga
+                        canvas.apply {
+                            saveState()
+                            setColorFill(BaseColor.YELLOW)
+                            setGState(PdfGState().apply { setFillOpacity(0.3f) })
+                            rectangle(72.5, 718.0 - (13.75 * schoolClass), 449.0, 13.0)
+                            fill()
+                            restoreState()
+                        }
                     }
-                    notified = true
-                    break
                 }
             }
-            pdfReader.close()
+            stamper.close()
+            reader.close()
 
-            // Notifica nessuna variazione
-            if (!notified && uri != null) {
-                notificationUtils.sendPdfNotification(uri, "Variazioni", "Nessuna variazione.")
-            } else if (!notified) {
-                notificationUtils.sendBrowserNotification(
-                    pdfUrl,
-                    "Variazioni",
-                    "Nessuna variazione. Errore salvataggio variazioni."
-                )
+            // Salva il pdf con eventuali rettangoli gialli
+            val uri = storageUtils.save(stream.toByteArray(), fileName, date.toString())
+
+            // Invia notifica
+            if (changes) {
+                if (uri != null) {
+                    notificationUtils.sendPdfNotification(
+                        uri,
+                        "Variazioni",
+                        "Ci sono variazioni."
+                    )
+                } else {
+                    notificationUtils.sendBrowserNotification(
+                        pdfUrl,
+                        "Variazioni",
+                        "Ci sono variazioni. Errore salvataggio variazioni."
+                    )
+                }
+            } else {
+                if (uri != null) {
+                    notificationUtils.sendPdfNotification(uri, "Variazioni", "Nessuna variazione.")
+                } else {
+                    notificationUtils.sendBrowserNotification(
+                        pdfUrl,
+                        "Variazioni",
+                        "Nessuna variazione. Errore salvataggio variazioni."
+                    )
+                }
             }
 
             return Result.success()
