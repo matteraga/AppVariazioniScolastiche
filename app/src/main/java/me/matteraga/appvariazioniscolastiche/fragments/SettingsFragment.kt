@@ -152,6 +152,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }, viewLifecycleOwner)
     }
 
+    private fun enqueueDeletePdfsWork() {
+        workManager.enqueueUniqueWork(
+            "delete",
+            ExistingWorkPolicy.KEEP,
+            OneTimeWorkRequestBuilder<DeletePdfsWorker>()
+                .build()
+        )
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.settings_preferences, rootKey)
 
@@ -224,7 +233,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
             editText.filters = arrayOf(InputFilter.AllCaps(), InputFilter.LengthFilter(4))
         }
         schoolClassPreference?.setOnPreferenceChangeListener { _, newValue ->
-            regex.matches(newValue.toString())
+            if (regex.matches(newValue.toString())) {
+                // Se cambia la classe elimina i pdf salvati perché evidenziati
+                enqueueDeletePdfsWork()
+                return@setOnPreferenceChangeListener true
+            } else {
+                return@setOnPreferenceChangeListener false
+            }
         }
 
         // Gestisce il permesso per le notifiche
@@ -294,12 +309,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Elimina i PDF delle variazioni e le shared preferences (uri dei pdf)
         val deletePdfsPreference = findPreference<Preference>("delete")
         deletePdfsPreference?.setOnPreferenceClickListener {
-            workManager.enqueueUniqueWork(
-                "delete",
-                ExistingWorkPolicy.KEEP,
-                OneTimeWorkRequestBuilder<DeletePdfsWorker>()
-                    .build()
-            )
+            enqueueDeletePdfsWork()
             Toast.makeText(context, "Elimino i file", Toast.LENGTH_SHORT).show()
             true
         }
