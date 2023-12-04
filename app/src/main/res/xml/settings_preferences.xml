@@ -30,16 +30,12 @@
             app:title="Classe"
             app:useSimpleSummaryProvider="true" />
 
-        <SeekBarPreference
-            android:max="24"
-            app:defaultValue="19"
+        <Preference
             app:dependency="check"
+            app:fragment="me.matteraga.appvariazioniscolastiche.fragments.ChecksFragment"
             app:iconSpaceReserved="false"
-            app:key="time"
-            app:min="1"
-            app:showSeekBarValue="true"
-            app:summary="A che ora saranno controllate le variazioni"
-            app:title="Ora del controllo" />
+            app:summary="A che ora/e saranno controllate le variazioni"
+            app:title="Gestisci controllo/i" />
 
     </PreferenceCategory>
 

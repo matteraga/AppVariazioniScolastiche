@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/settingsFragment">
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="me.matteraga.appvariazioniscolastiche.fragments.SettingsFragment"
+        android:label="Variazioni Pascal">
+        <action
+            android:id="@+id/action_settingsFragment_to_checksFragment"
+            app:destination="@id/checksFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/checksFragment"
+        android:name="me.matteraga.appvariazioniscolastiche.fragments.ChecksFragment"
+        android:label="Controlli">
+        <action
+            android:id="@+id/action_checksFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+</navigation>

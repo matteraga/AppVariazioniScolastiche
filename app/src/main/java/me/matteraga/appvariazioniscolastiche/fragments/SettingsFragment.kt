@@ -10,20 +10,26 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.text.InputFilter
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreferenceCompat
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.judemanutd.autostarter.AutoStartPermissionHelper
 import me.matteraga.appvariazioniscolastiche.R
 import me.matteraga.appvariazioniscolastiche.alarmmanager.AlarmScheduler
 import me.matteraga.appvariazioniscolastiche.preferences.DaysListPreference
@@ -33,7 +39,9 @@ import me.matteraga.appvariazioniscolastiche.workers.DeletePdfsWorker
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
-    private lateinit var sharedPref: SharedPreferences
+    private lateinit var context: Context
+    private lateinit var sharedPrefFlags: SharedPreferences
+    private lateinit var sharedPrefFiles: SharedPreferences
     private lateinit var workManager: WorkManager
     private lateinit var storageUtils: StorageUtils
     private lateinit var alarmScheduler: AlarmScheduler
@@ -44,7 +52,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
-        sharedPref = context.getSharedPreferences("files", Context.MODE_PRIVATE)
+        this.context = context
+        sharedPrefFlags = context.getSharedPreferences("flags", Context.MODE_PRIVATE)
+        sharedPrefFiles = context.getSharedPreferences("files", Context.MODE_PRIVATE)
         workManager = WorkManager.getInstance(context)
         storageUtils = StorageUtils(context)
         alarmScheduler = AlarmScheduler(context)
@@ -86,14 +96,79 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
     }
 
+    private fun showAutoStartDialog(context: Context) {
+        // Controlla se il permesso di avvio automatico è disponibile
+        val autoStartPermissionHelper = AutoStartPermissionHelper.getInstance()
+        if (autoStartPermissionHelper.isAutoStartPermissionAvailable(
+                context,
+                true
+            )
+        ) {
+            AlertDialog.Builder(context)
+                .setTitle("Avvio automatico")
+                .setMessage(
+                    "Per funzionare correttamente è necessario che l'app abbia il permesso di eseguire in background."
+                )
+                // Apri la pagina di DontKillMyApp
+                .setNeutralButton("Informazioni") { dialog, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse("https://dontkillmyapp.com")
+                        addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                    }
+                    startActivity(Intent.createChooser(intent, "Apri con"))
+                    dialog.dismiss()
+                }
+                // Apri impostazioni esecuzione in background
+                .setPositiveButton("Ok") { dialog, _ ->
+                    autoStartPermissionHelper.getAutoStartPermission(
+                        context,
+                        true
+                    )
+                    dialog.dismiss()
+                }
+                .show()
+        } else {
+            Toast.makeText(context, "Non disponibile per questo dispositivo", Toast.LENGTH_SHORT)
+                .show()
+        }
+    }
+
+    // Toolbar menu
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.top_settings_menu, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                when (menuItem.itemId) {
+                    R.id.autoStart -> showAutoStartDialog(context)
+                }
+                return true
+            }
+        }, viewLifecycleOwner)
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(R.xml.root_preferences, rootKey)
+        setPreferencesFromResource(R.xml.settings_preferences, rootKey)
+
+        // Mostra il dialogo solo la prima volta
+        if (sharedPrefFlags.getBoolean("firstRun", true)) {
+            showAutoStartDialog(context)
+            with(sharedPrefFlags.edit()) {
+                putBoolean("firstRun", false)
+                apply()
+            }
+        }
 
         // Apre il PDF delle variazioni del giorno selezionato
         val openPreference = findPreference<DaysListPreference>("open")
         openPreference?.setOnPreferenceChangeListener { _, newValue ->
             // new value è la data selezionata
-            val pref = sharedPref.getString("${newValue}-uri", "") ?: ""
+            val pref = sharedPrefFiles.getString("${newValue}-uri", "") ?: ""
             val uri = Uri.parse(pref)
             if (pref.isNotBlank() && storageUtils.check(uri)) {
                 val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -126,21 +201,18 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
-        // Aggiorna l'ora dell'allarme
-        val timePreference = findPreference<SeekBarPreference>("time")
-        timePreference?.setOnPreferenceChangeListener { _, newValue ->
-            alarmScheduler.schedule(newValue.toString().toInt())
-            true
-        }
-
-        // Attiva/disattiva l'allarme
+        // Attiva/disattiva le varie allarmi, non vengono rimosse dalle preference solo disattivate
         val checkChangesPreference = findPreference<SwitchPreferenceCompat>("check")
         checkChangesPreference?.setOnPreferenceChangeListener { _, newValue ->
             val newValueBool = newValue.toString().toBoolean()
             if (newValueBool) {
-                alarmScheduler.schedule(timePreference?.value ?: 19)
+                // Un allarme è sempre presente
+                if (alarmScheduler.getScheduledAlarms().isEmpty()) {
+                    alarmScheduler.scheduleAndSave(19)
+                }
+                alarmScheduler.scheduleSaved()
             } else {
-                alarmScheduler.cancel()
+                alarmScheduler.cancelSaved()
             }
             true
         }
@@ -160,7 +232,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         notifyPreference?.setOnPreferenceClickListener {
             if ((!shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) &&
                         ContextCompat.checkSelfPermission(
-                            requireContext(),
+                            context,
                             Manifest.permission.POST_NOTIFICATIONS
                         ) == PackageManager.PERMISSION_DENIED) &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
@@ -182,12 +254,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             filesPreference?.setOnPreferenceClickListener {
                 val write = ContextCompat.checkSelfPermission(
-                    requireContext(),
+                    context,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_DENIED
 
                 val read = ContextCompat.checkSelfPermission(
-                    requireContext(),
+                    context,
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_DENIED
 
@@ -239,7 +311,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Aggiorna se il permesso per le notifiche è concesso o meno
         val notifyPreference = findPreference<Preference>("notify")
         notifyPreference?.summary = if (ContextCompat.checkSelfPermission(
-                requireContext(),
+                context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
@@ -252,11 +324,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val filesPreference = findPreference<Preference>("files")
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             filesPreference?.summary = if (ContextCompat.checkSelfPermission(
-                    requireContext(),
+                    context,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(
-                    requireContext(),
+                    context,
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED
             ) {

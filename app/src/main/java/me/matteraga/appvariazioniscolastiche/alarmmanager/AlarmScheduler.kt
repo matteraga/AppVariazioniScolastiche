@@ -8,10 +8,13 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 class AlarmScheduler(private val context: Context) {
+
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
+    // Ogni allarme deve essere impostata per un ora diversa e usa l'ora come identificatore
+    private val sharedPrefAlarms = context.getSharedPreferences("alarms", Context.MODE_PRIVATE)
 
     // Programma l'allarme per l'ora indicata, si ripete ogni giorno
-    fun schedule(hour: Int) {
+    private fun scheduleSaved(hour: Int) {
         var time = LocalDateTime.now()
             .withHour(hour)
             .withMinute(0)
@@ -26,22 +29,69 @@ class AlarmScheduler(private val context: Context) {
             AlarmManager.INTERVAL_DAY,
             PendingIntent.getBroadcast(
                 context,
-                1,
+                hour,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         )
     }
 
+    // Attiva tutte le allarmi salvate nelle preference
+    fun scheduleSaved() {
+        getScheduledAlarms().forEach {
+            scheduleSaved(it)
+        }
+    }
+
+    // Attiva e salva una nuova allarme
+    fun scheduleAndSave(hour: Int) {
+        scheduleSaved(hour)
+        with(sharedPrefAlarms.edit()) {
+            putInt(hour.toString(), hour)
+            apply()
+        }
+    }
+
     // Cancella l'allarme
-    fun cancel() {
+    private fun cancelSaved(hour: Int) {
         alarmManager.cancel(
             PendingIntent.getBroadcast(
                 context,
-                1,
+                hour,
                 Intent(context, AlarmReceiver::class.java),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         )
+    }
+
+    // Cancella tutte le allarmi salvate nelle preference
+    fun cancelSaved() {
+        getScheduledAlarms().forEach {
+            cancelSaved(it)
+        }
+    }
+
+    // Cancella ed elimina un allarme
+    fun cancelAndRemove(hour: Int) {
+        cancelSaved(hour)
+        with(sharedPrefAlarms.edit()) {
+            remove(hour.toString())
+            apply()
+        }
+    }
+
+    // Tutte le ore già impostate
+    fun getScheduledAlarms(): List<Int> {
+        return sharedPrefAlarms.all.map {
+            it.value.toString().toInt()
+        }
+    }
+
+    // Una lista di ore non ancora impostate
+    fun getNotSetAlarms(): List<Int> {
+        val alarms = getScheduledAlarms()
+        return (1..24).mapNotNull {
+            it.takeUnless { alarms.contains(it) }
+        }
     }
 }
