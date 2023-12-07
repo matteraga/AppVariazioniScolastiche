@@ -238,6 +238,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 enqueueDeletePdfsWork()
                 return@setOnPreferenceChangeListener true
             } else {
+                Toast.makeText(context, "Classe non valida", Toast.LENGTH_SHORT).show()
                 return@setOnPreferenceChangeListener false
             }
         }
