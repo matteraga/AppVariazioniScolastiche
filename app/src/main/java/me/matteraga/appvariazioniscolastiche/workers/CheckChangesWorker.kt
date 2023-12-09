@@ -105,8 +105,10 @@ class CheckChangesWorker(
             if (pdfUrl == null) {
                 notificationUtils.sendBrowserNotification(
                     changesUrl,
+                    date,
                     "Variazioni",
-                    "PDF variazioni non trovato."
+                    "PDF variazioni non trovato per il ${date}.",
+                    R.drawable.ic_unpublished
                 )
                 return Result.failure()
             }
@@ -162,31 +164,49 @@ class CheckChangesWorker(
                 if (uri != null) {
                     notificationUtils.sendPdfNotification(
                         uri,
+                        date,
                         "Variazioni",
-                        "Ci sono variazioni."
+                        "Ci sono variazioni per il ${date}.",
+                        R.drawable.ic_check_circle
                     )
                 } else {
                     notificationUtils.sendBrowserNotification(
                         pdfUrl,
+                        date,
                         "Variazioni",
-                        "Ci sono variazioni. Errore salvataggio variazioni."
+                        "Ci sono variazioni per il ${date}. Errore salvataggio variazioni.",
+                        R.drawable.ic_warning
                     )
                 }
             } else {
                 if (uri != null) {
-                    notificationUtils.sendPdfNotification(uri, "Variazioni", "Nessuna variazione.")
+                    notificationUtils.sendPdfNotification(
+                        uri,
+                        date,
+                        "Variazioni",
+                        "Nessuna variazione per il ${date}.",
+                        R.drawable.ic_unpublished
+                    )
                 } else {
                     notificationUtils.sendBrowserNotification(
                         pdfUrl,
+                        date,
                         "Variazioni",
-                        "Nessuna variazione. Errore salvataggio variazioni."
+                        "Nessuna variazione per il ${date}. Errore salvataggio variazioni.",
+                        R.drawable.ic_warning
                     )
                 }
             }
 
             return Result.success()
         } catch (th: Throwable) {
-            notificationUtils.sendBrowserNotification(changesUrl, "Errore", "Errore non gestito")
+            notificationUtils.sendBrowserNotification(
+                changesUrl,
+                date,
+                "Errore",
+                "Errore non gestito per il ${date}",
+                R.drawable.ic_cancel
+            )
             Log.e("CheckChanges", "Extraction error", th)
             return Result.failure()
         }

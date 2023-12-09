@@ -10,12 +10,12 @@ import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import me.matteraga.appvariazioniscolastiche.R
+import java.time.LocalDate
 
 class NotificationUtils(private val context: Context) {
 
     // Invia una notifica se le notifiche sono abilitate e il permesso è concesso
-    private fun sendNotification(notification: Notification) {
+    private fun sendNotification(notification: Notification, id: Int) {
         with(NotificationManagerCompat.from(context)) {
             if (ActivityCompat.checkSelfPermission(
                     context,
@@ -24,13 +24,13 @@ class NotificationUtils(private val context: Context) {
             ) {
                 return
             }
-            // Tutte le notifiche hanno lo stesso id per sovrascrivere la notifica precedente
-            notify(1, notification)
+            // L'id della notifica è l'hashcode della data
+            notify(id, notification)
         }
     }
 
     // Invia una notifica che se cliccata apre il pdf
-    fun sendPdfNotification(uri: Uri, title: String, text: String) {
+    fun sendPdfNotification(uri: Uri, date: LocalDate, title: String, text: String, icon: Int) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/pdf")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -38,12 +38,12 @@ class NotificationUtils(private val context: Context) {
         }
         val pending = PendingIntent.getActivity(
             context,
-            1,
+            date.hashCode(),
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val builder = NotificationCompat.Builder(context, "changes").apply {
-            setSmallIcon(R.drawable.ic_check_circle)
+            setSmallIcon(icon)
             setContentTitle(title)
             setContentText(text)
             priority = NotificationCompat.PRIORITY_DEFAULT
@@ -51,23 +51,29 @@ class NotificationUtils(private val context: Context) {
             setAutoCancel(true)
         }
 
-        sendNotification(builder.build())
+        sendNotification(builder.build(), date.hashCode())
     }
 
     // Invia una notifica che se cliccata apre il browser
-    fun sendBrowserNotification(url: String, title: String, text: String) {
+    fun sendBrowserNotification(
+        url: String,
+        date: LocalDate,
+        title: String,
+        text: String,
+        icon: Int
+    ) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse(url)
             addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
         }
         val pending = PendingIntent.getActivity(
             context,
-            1,
+            date.hashCode(),
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val builder = NotificationCompat.Builder(context, "changes").apply {
-            setSmallIcon(R.drawable.ic_warning)
+            setSmallIcon(icon)
             setContentTitle(title)
             setContentText(text)
             priority = NotificationCompat.PRIORITY_DEFAULT
@@ -75,6 +81,6 @@ class NotificationUtils(private val context: Context) {
             setAutoCancel(true)
         }
 
-        sendNotification(builder.build())
+        sendNotification(builder.build(), date.hashCode())
     }
 }
