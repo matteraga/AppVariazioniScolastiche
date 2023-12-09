@@ -20,6 +20,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -199,12 +200,21 @@ class CheckChangesWorker(
             }
 
             return Result.success()
+        } catch (ex: IOException) {
+            notificationUtils.sendOpenAppNotification(
+                date,
+                "Errore",
+                "Errore di connessione per il ${date}.",
+                R.drawable.ic_cancel
+            )
+            Log.e("CheckChanges", "Connection error", ex)
+            return Result.failure()
         } catch (th: Throwable) {
             notificationUtils.sendBrowserNotification(
                 changesUrl,
                 date,
                 "Errore",
-                "Errore non gestito per il ${date}",
+                "Errore non gestito per il ${date}.",
                 R.drawable.ic_cancel
             )
             Log.e("CheckChanges", "Extraction error", th)

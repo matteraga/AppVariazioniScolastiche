@@ -10,6 +10,7 @@ import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import me.matteraga.appvariazioniscolastiche.activities.MainActivity
 import java.time.LocalDate
 
 class NotificationUtils(private val context: Context) {
@@ -65,6 +66,34 @@ class NotificationUtils(private val context: Context) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse(url)
             addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+        }
+        val pending = PendingIntent.getActivity(
+            context,
+            date.hashCode(),
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val builder = NotificationCompat.Builder(context, "changes").apply {
+            setSmallIcon(icon)
+            setContentTitle(title)
+            setContentText(text)
+            priority = NotificationCompat.PRIORITY_DEFAULT
+            setContentIntent(pending)
+            setAutoCancel(true)
+        }
+
+        sendNotification(builder.build(), date.hashCode())
+    }
+
+    // Invia una notifica che se cliccata apre l'app
+    fun sendOpenAppNotification(
+        date: LocalDate,
+        title: String,
+        text: String,
+        icon: Int
+    ) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP and Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
         val pending = PendingIntent.getActivity(
             context,
