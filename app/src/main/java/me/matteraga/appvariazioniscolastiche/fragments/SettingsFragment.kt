@@ -165,9 +165,22 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.settings_preferences, rootKey)
 
-        // Mostra il dialogo solo la prima volta
+        // Autostart dialog e richiesta permesso mostrati solo la prima volta
         if (sharedPrefFlags.getBoolean("firstRun", true)) {
             showAutoStartDialog(context)
+            // Se android >= 13 richiedi permesso per le notifiche
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            // Se android < 29 richiedi storage
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                filesPermissionsLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    )
+                )
+            }
             with(sharedPrefFlags.edit()) {
                 putBoolean("firstRun", false)
                 apply()
@@ -334,7 +347,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         // Aggiorna se il permesso per i file è concesso o meno
         val filesPreference = findPreference<Preference>("files")
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             filesPreference?.summary = if (ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
