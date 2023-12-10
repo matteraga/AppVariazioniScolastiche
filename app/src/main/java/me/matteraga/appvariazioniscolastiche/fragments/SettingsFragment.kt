@@ -30,6 +30,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.judemanutd.autostarter.AutoStartPermissionHelper
+import me.matteraga.appvariazioniscolastiche.ChangesToCheck
 import me.matteraga.appvariazioniscolastiche.R
 import me.matteraga.appvariazioniscolastiche.alarmmanager.AlarmScheduler
 import me.matteraga.appvariazioniscolastiche.preferences.DaysListPreference
@@ -217,7 +218,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             if (newValueBool) {
                 // Un allarme è sempre presente
                 if (alarmScheduler.getScheduledAlarms().isEmpty()) {
-                    alarmScheduler.scheduleAndSave(19)
+                    alarmScheduler.scheduleAndSave(19, ChangesToCheck.TODAY)
                 }
                 alarmScheduler.scheduleSaved()
             } else {

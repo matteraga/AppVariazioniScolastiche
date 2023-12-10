@@ -11,6 +11,7 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceFragmentCompat
+import me.matteraga.appvariazioniscolastiche.ChangesToCheck
 import me.matteraga.appvariazioniscolastiche.R
 import me.matteraga.appvariazioniscolastiche.alarmmanager.AlarmScheduler
 import me.matteraga.appvariazioniscolastiche.preferences.CheckPreference
@@ -40,7 +41,7 @@ class ChecksFragment : PreferenceFragmentCompat() {
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 when (menuItem.itemId) {
-                    R.id.add -> createSeekBarView(alarmScheduler.getNotSetAlarms()[0])
+                    R.id.add -> createSeekBarView(alarmScheduler.getNotSetAlarms()[0], ChangesToCheck.TODAY)
                     // Torna alle impostazioni
                     else -> findNavController().navigate(R.id.action_checksFragment_to_settingsFragment)
                 }
@@ -50,21 +51,24 @@ class ChecksFragment : PreferenceFragmentCompat() {
     }
 
     // Crea la view
-    private fun showSeekBarView(hour: Int) {
+    private fun showSeekBarView(hour: Int, changes: Int) {
         val newPref = CheckPreference(context).apply {
             title = "Controlla alle:"
+            summary = "Le variazioni di:"
             showSeekBarValue = true
             min = 0
             max = 23
             value = hour
+            changesToCheck = changes
             layoutResource = R.layout.check_preference
         }
         newPref.setOnPreferenceChangeListener { _, newValue ->
             // Controlla che non si già presente un allarme per l'ora
             if (!alarmScheduler.getScheduledAlarms().contains(newValue)) {
                 // Il valore non è ancora stato modificato
+                val changesToCheck = alarmScheduler.getScheduledAlarmChangesToCheck(newPref.value)
                 alarmScheduler.cancelAndRemove(newPref.value)
-                alarmScheduler.scheduleAndSave(newValue.toString().toInt())
+                alarmScheduler.scheduleAndSave(newValue.toString().toInt(), changesToCheck)
                 return@setOnPreferenceChangeListener true
             } else {
                 Toast.makeText(
@@ -74,6 +78,10 @@ class ChecksFragment : PreferenceFragmentCompat() {
                 ).show()
                 return@setOnPreferenceChangeListener false
             }
+        }
+        newPref.setOnChipsChangeListener {
+            alarmScheduler.cancelAndRemove(newPref.value)
+            alarmScheduler.scheduleAndSave(newPref.value, it)
         }
         newPref.setOnRemoveClickListener { preference ->
             // Un allarme rimane sempre
@@ -92,14 +100,14 @@ class ChecksFragment : PreferenceFragmentCompat() {
     }
 
     // Crea l'allarme e la view, se ci sono menu di dieci allarmi già presenti
-    private fun createSeekBarView(hour: Int) {
+    private fun createSeekBarView(hour: Int, changes: Int) {
         if (alarmScheduler.getScheduledAlarms().count() >= 10) {
             Toast.makeText(context, "Non puoi aggiungere altri controlli", Toast.LENGTH_SHORT)
                 .show()
             return
         }
-        alarmScheduler.scheduleAndSave(hour)
-        showSeekBarView(hour)
+        alarmScheduler.scheduleAndSave(hour, changes)
+        showSeekBarView(hour, changes)
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -107,7 +115,7 @@ class ChecksFragment : PreferenceFragmentCompat() {
 
         // Carica la view di tutte le allarmi salvate
         alarmScheduler.getScheduledAlarms().forEach {
-            showSeekBarView(it)
+            showSeekBarView(it, alarmScheduler.getScheduledAlarmChangesToCheck(it))
         }
     }
 }

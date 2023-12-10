@@ -4,17 +4,20 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import me.matteraga.appvariazioniscolastiche.ChangesToCheck
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 class AlarmScheduler(private val context: Context) {
 
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
+
     // Ogni allarme deve essere impostata per un ora diversa e usa l'ora come identificatore
+    // Il valore è quali variazioni controllare (ChangesToCheck)
     private val sharedPrefAlarms = context.getSharedPreferences("alarms", Context.MODE_PRIVATE)
 
     // Programma l'allarme per l'ora indicata, si ripete ogni giorno
-    private fun scheduleSaved(hour: Int) {
+    private fun scheduleSaved(hour: Int, changesToCheck: Int) {
         var time = LocalDateTime.now()
             .withHour(hour)
             .withMinute(0)
@@ -22,7 +25,9 @@ class AlarmScheduler(private val context: Context) {
         if (time.isBefore(LocalDateTime.now())) {
             time = time.plusDays(1)
         }
-        val intent = Intent(context, AlarmReceiver::class.java)
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra("changesToCheck", changesToCheck)
+        }
         alarmManager.setInexactRepeating(
             AlarmManager.RTC_WAKEUP,
             time.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
@@ -39,15 +44,15 @@ class AlarmScheduler(private val context: Context) {
     // Attiva tutte le allarmi salvate nelle preference
     fun scheduleSaved() {
         getScheduledAlarms().forEach {
-            scheduleSaved(it)
+            scheduleSaved(it, getScheduledAlarmChangesToCheck(it))
         }
     }
 
     // Attiva e salva una nuova allarme
-    fun scheduleAndSave(hour: Int) {
-        scheduleSaved(hour)
+    fun scheduleAndSave(hour: Int, changesToCheck: Int) {
+        scheduleSaved(hour, changesToCheck)
         with(sharedPrefAlarms.edit()) {
-            putInt(hour.toString(), hour)
+            putInt(hour.toString(), changesToCheck)
             apply()
         }
     }
@@ -83,8 +88,13 @@ class AlarmScheduler(private val context: Context) {
     // Tutte le ore già impostate
     fun getScheduledAlarms(): List<Int> {
         return sharedPrefAlarms.all.map {
-            it.value.toString().toInt()
+            it.key.toInt()
         }
+    }
+
+    // Variazioni da controllare per un ora data
+    fun getScheduledAlarmChangesToCheck(hour: Int): Int {
+        return sharedPrefAlarms.getInt(hour.toString(), ChangesToCheck.TODAY)
     }
 
     // Una lista di ore non ancora impostate
