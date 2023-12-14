@@ -10,7 +10,6 @@ import androidx.work.WorkManager
 import me.matteraga.appvariazioniscolastiche.ChangesToCheck
 import me.matteraga.appvariazioniscolastiche.utilities.DateUtils
 import me.matteraga.appvariazioniscolastiche.workers.CheckChangesWorker
-import java.time.LocalDate
 
 class AlarmReceiver : BroadcastReceiver() {
 

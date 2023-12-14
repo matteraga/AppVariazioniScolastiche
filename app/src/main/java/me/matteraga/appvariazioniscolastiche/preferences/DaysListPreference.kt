@@ -6,7 +6,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.preference.ListPreference
 import me.matteraga.appvariazioniscolastiche.R
 import me.matteraga.appvariazioniscolastiche.utilities.DateUtils
-import java.time.LocalDate
 
 class DaysListPreference : ListPreference {
 
