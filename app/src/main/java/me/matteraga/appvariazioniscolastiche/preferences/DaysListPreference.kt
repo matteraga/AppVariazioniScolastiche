@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.ListPreference
 import me.matteraga.appvariazioniscolastiche.R
+import me.matteraga.appvariazioniscolastiche.utilities.DateUtils
 import java.time.LocalDate
 
 class DaysListPreference : ListPreference {
@@ -34,7 +35,7 @@ class DaysListPreference : ListPreference {
     // quindi creo un dialog con una lista items senza radio button
     override fun onClick() {
         // Assegna i valori ai giorni (Oggi, domani) della lista
-        entryValues = arrayOf(LocalDate.now().toString(), LocalDate.now().plusDays(1L).toString())
+        entryValues = arrayOf(DateUtils.date(0).toString(), DateUtils.date(1).toString())
 
         // Mostra la lista dei giorni senza radio button
         AlertDialog.Builder(context).apply {
