@@ -1,6 +1,7 @@
 package me.matteraga.appvariazioniscolastiche.workers
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
@@ -159,6 +160,19 @@ class CheckChangesWorker(
 
             // Salva il pdf con eventuali rettangoli gialli
             val uri = storageUtils.save(stream.toByteArray(), fileName, date.toString())
+
+            val openPDF = inputData.getBoolean("openPDF", false)
+            // Apri il pdf
+            if (openPDF && uri != null) {
+                val pdfIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/pdf")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(pdfIntent)
+                return Result.success()
+            }
 
             // Invia notifica
             if (changes) {

@@ -211,6 +211,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         manualCheckPreference?.setOnPreferenceChangeListener { _, newValue ->
             val data = Data.Builder().apply {
                 putString("date", newValue.toString())
+                putBoolean("openPDF", true)
             }.build()
             // Il worker si aspetta la data per cui controllare le variazioni
             workManager.enqueueUniqueWork(
