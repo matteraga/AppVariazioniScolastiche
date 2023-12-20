@@ -215,7 +215,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }.build()
             // Il worker si aspetta la data per cui controllare le variazioni
             workManager.enqueueUniqueWork(
-                "manual-check",
+                "manual-check-${newValue}",
                 ExistingWorkPolicy.KEEP,
                 OneTimeWorkRequestBuilder<CheckChangesWorker>().apply {
                     setInputData(data)
