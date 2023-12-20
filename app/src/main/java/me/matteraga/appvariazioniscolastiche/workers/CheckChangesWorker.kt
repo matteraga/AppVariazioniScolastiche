@@ -174,6 +174,7 @@ class CheckChangesWorker(
                 return Result.success()
             }
 
+            val onlyChanges = sharedPref.getBoolean("onlyChanges", false)
             // Invia notifica
             if (changes) {
                 if (uri != null) {
@@ -193,7 +194,7 @@ class CheckChangesWorker(
                         R.drawable.ic_warning
                     )
                 }
-            } else {
+            } else if (!onlyChanges) {
                 if (uri != null) {
                     notificationUtils.sendPdfNotification(
                         uri,
