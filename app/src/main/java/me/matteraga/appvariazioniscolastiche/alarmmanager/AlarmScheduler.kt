@@ -4,6 +4,8 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import androidx.preference.PreferenceManager
 import me.matteraga.appvariazioniscolastiche.ChangesToCheck
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -11,6 +13,7 @@ import java.time.ZoneId
 class AlarmScheduler(private val context: Context) {
 
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
+    private val sharedPref = PreferenceManager.getDefaultSharedPreferences(context)
 
     // Ogni allarme deve essere impostata per un ora diversa e usa l'ora come identificatore
     // Il valore è quali variazioni controllare (ChangesToCheck)
@@ -28,16 +31,30 @@ class AlarmScheduler(private val context: Context) {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("changesToCheck", changesToCheck)
         }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            hour,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val millis = time.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            alarmManager.canScheduleExactAlarms() &&
+            sharedPref.getBoolean("useExactAlarms", false)
+        ) {
+            alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                millis,
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent
+            )
+            return
+        }
         alarmManager.setInexactRepeating(
             AlarmManager.RTC_WAKEUP,
-            time.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
+            millis,
             AlarmManager.INTERVAL_DAY,
-            PendingIntent.getBroadcast(
-                context,
-                hour,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+            pendingIntent
         )
     }
 

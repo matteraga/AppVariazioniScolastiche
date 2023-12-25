@@ -55,6 +55,18 @@
             app:summary="Negato"
             app:title="Download di file" />
 
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="exactAlarms"
+            app:summary="Negato"
+            app:title="Allarmi precise" />
+
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:key="useExactAlarms"
+            app:summary="Le allarmi normali possono essere ritardate fino a 60 minuti"
+            app:title="Usa allarmi precise" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

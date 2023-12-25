@@ -1,6 +1,7 @@
 package me.matteraga.appvariazioniscolastiche.fragments
 
 import android.Manifest
+import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -322,6 +323,42 @@ class SettingsFragment : PreferenceFragmentCompat() {
             filesPreference?.isVisible = false
         }
 
+        // Gestisce il permesso per le allarmi precise, solo per Android >= 12
+        val exactAlarmsPreference = findPreference<Preference>("exactAlarms")
+        // Gestisce l'attivazione delle allarmi precise, solo per Android >= 12
+        val useExactAlarmsPreference = findPreference<Preference>("useExactAlarms")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            exactAlarmsPreference?.setOnPreferenceClickListener {
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                startActivity(intent)
+                true
+            }
+            useExactAlarmsPreference?.setOnPreferenceChangeListener { preference, newValue ->
+                if (newValue.toString().toBoolean()) {
+                    AlertDialog.Builder(context).apply {
+                        setTitle("Avviso")
+                        setMessage("Le allarmi precise consumano più batteria rispetto alle allarmi normali. Attivale solo se vuoi che il controllo delle variazioni sia preciso.")
+                        setPositiveButton("Prosegui") { dialog, _ ->
+                            (preference as SwitchPreferenceCompat).isChecked = true
+                            AlarmScheduler(context).scheduleSaved()
+                            dialog.dismiss()
+                        }
+                        setNegativeButton("Annulla") { dialog, _ ->
+                            (preference as SwitchPreferenceCompat).isChecked = false
+                            dialog.dismiss()
+                        }
+                    }.create().show()
+                } else {
+                    (preference as SwitchPreferenceCompat).isChecked = false
+                    AlarmScheduler(context).scheduleSaved()
+                }
+                false
+            }
+        } else {
+            exactAlarmsPreference?.isVisible = false
+            useExactAlarmsPreference?.isVisible = false
+        }
+
         // Elimina i PDF delle variazioni e le shared preferences (uri dei pdf)
         val deletePdfsPreference = findPreference<Preference>("delete")
         deletePdfsPreference?.setOnPreferenceClickListener {
@@ -362,6 +399,20 @@ class SettingsFragment : PreferenceFragmentCompat() {
             } else {
                 "Negato"
             }
+        }
+
+        // Aggiorna se il permesso per le allarmi precise è concesso o meno, attiva o disattiva lo switch, solo per Android >= 12
+        val exactAlarmsPreference = findPreference<Preference>("exactAlarms")
+        val useExactAlarmsPreference = findPreference<Preference>("useExactAlarms")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            exactAlarmsPreference?.summary =
+                if (context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()) {
+                    useExactAlarmsPreference?.isEnabled = true
+                    "Concesso"
+                } else {
+                    useExactAlarmsPreference?.isEnabled = false
+                    "Negato"
+                }
         }
     }
 }
