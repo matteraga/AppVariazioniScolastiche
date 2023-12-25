@@ -36,8 +36,8 @@ class CheckChangesWorker(
         "https://www.ispascalcomandini.it/variazioni-orario-istituto-tecnico-tecnologico/"
     private val client = OkHttpClient()
 
-    private lateinit var date: LocalDate //LocalDate.now().plusDays(1L)
-    private lateinit var fileName: String
+    private lateinit var date: LocalDate
+    private lateinit var stringDate: String
 
     private val storageUtils = StorageUtils(context)
     private val notificationUtils = NotificationUtils(context)
@@ -52,7 +52,7 @@ class CheckChangesWorker(
                 Random.nextInt(),
                 NotificationCompat.Builder(context, "changes")
                     .setSmallIcon(R.drawable.ic_search)
-                    .setContentTitle("Controllo variazioni in corso...")
+                    .setContentTitle("Controllo le variazioni...")
                     .setProgress(0, 0, true)
                     .build()
             )
@@ -74,7 +74,8 @@ class CheckChangesWorker(
 
             // Prende la data da controllare dai parametri del worker
             date = LocalDate.parse(inputData.getString("date") ?: return Result.failure())
-            fileName = "Variazioni-${date}.pdf"
+            stringDate = date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.ITALIAN))
+            val fileName = "Variazioni-$stringDate.pdf"
 
             // Sito scuola
             val changesUrlResponse = makeRequest(changesUrl)
@@ -109,7 +110,7 @@ class CheckChangesWorker(
                     changesUrl,
                     date,
                     "Variazioni",
-                    "PDF variazioni non trovato per il ${date}.",
+                    "PDF variazioni non trovato per il $stringDate.",
                     R.drawable.ic_unpublished
                 )
                 return Result.failure()
@@ -182,7 +183,7 @@ class CheckChangesWorker(
                         uri,
                         date,
                         "Variazioni",
-                        "Ci sono variazioni per il ${date}.",
+                        "Ci sono variazioni per il $stringDate.",
                         R.drawable.ic_check_circle
                     )
                 } else {
@@ -190,7 +191,7 @@ class CheckChangesWorker(
                         pdfUrl,
                         date,
                         "Variazioni",
-                        "Ci sono variazioni per il ${date}. Errore salvataggio variazioni.",
+                        "Ci sono variazioni per il $stringDate. Errore salvataggio variazioni.",
                         R.drawable.ic_warning
                     )
                 }
@@ -200,7 +201,7 @@ class CheckChangesWorker(
                         uri,
                         date,
                         "Variazioni",
-                        "Nessuna variazione per il ${date}.",
+                        "Nessuna variazione per il $stringDate.",
                         R.drawable.ic_unpublished
                     )
                 } else {
@@ -208,7 +209,7 @@ class CheckChangesWorker(
                         pdfUrl,
                         date,
                         "Variazioni",
-                        "Nessuna variazione per il ${date}. Errore salvataggio variazioni.",
+                        "Nessuna variazione per il $stringDate. Errore salvataggio variazioni.",
                         R.drawable.ic_warning
                     )
                 }
@@ -219,7 +220,7 @@ class CheckChangesWorker(
             notificationUtils.sendOpenAppNotification(
                 date,
                 "Errore",
-                "Errore di connessione per il ${date}.",
+                "Errore di connessione per il $stringDate.",
                 R.drawable.ic_cancel
             )
             Log.e("CheckChanges", "Connection error", ex)
@@ -229,7 +230,7 @@ class CheckChangesWorker(
                 changesUrl,
                 date,
                 "Errore",
-                "Errore non gestito per il ${date}.",
+                "Errore non gestito per il $stringDate.",
                 R.drawable.ic_cancel
             )
             Log.e("CheckChanges", "Extraction error", th)

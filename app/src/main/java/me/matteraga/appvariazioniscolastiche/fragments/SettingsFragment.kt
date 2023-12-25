@@ -42,8 +42,10 @@ import me.matteraga.appvariazioniscolastiche.workers.DeletePdfsWorker
 class SettingsFragment : PreferenceFragmentCompat() {
 
     private lateinit var context: Context
+
     private lateinit var sharedPrefFlags: SharedPreferences
     private lateinit var sharedPrefFiles: SharedPreferences
+
     private lateinit var workManager: WorkManager
     private lateinit var storageUtils: StorageUtils
     private lateinit var alarmScheduler: AlarmScheduler
@@ -55,8 +57,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         super.onAttach(context)
 
         this.context = context
+
         sharedPrefFlags = context.getSharedPreferences("flags", Context.MODE_PRIVATE)
         sharedPrefFiles = context.getSharedPreferences("files", Context.MODE_PRIVATE)
+
         workManager = WorkManager.getInstance(context)
         storageUtils = StorageUtils(context)
         alarmScheduler = AlarmScheduler(context)
@@ -65,16 +69,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
         notificationPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
                 if (!isGranted) {
-                    val builder: AlertDialog.Builder = AlertDialog.Builder(context)
-                    builder
-                        .setTitle("Permesso non concesso")
-                        .setMessage("Non potrai ricevere notifiche quando ci sono variazioni.")
-                        .setNeutralButton("Ok") { dialog, _ ->
+                    AlertDialog.Builder(context).apply {
+                        setTitle("Permesso non concesso")
+                        setMessage("Non potrai ricevere notifiche quando ci sono variazioni.")
+                        setNeutralButton("Ok") { dialog, _ ->
                             dialog.dismiss()
                         }
-
-                    val dialog: AlertDialog = builder.create()
-                    dialog.show()
+                    }.create().show()
                 }
             }
 
@@ -84,35 +85,25 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 if (permissions[Manifest.permission.WRITE_EXTERNAL_STORAGE] == false ||
                     permissions[Manifest.permission.READ_EXTERNAL_STORAGE] == false
                 ) {
-                    val builder: AlertDialog.Builder = AlertDialog.Builder(context)
-                    builder
-                        .setTitle("Permesso non concesso")
-                        .setMessage("Non potrai salvare i PDF delle variazioni.")
-                        .setNeutralButton("Ok") { dialog, _ ->
+                    AlertDialog.Builder(context).apply {
+                        setTitle("Permesso non concesso")
+                        setMessage("Non potrai salvare i PDF delle variazioni.")
+                        setNeutralButton("Ok") { dialog, _ ->
                             dialog.dismiss()
                         }
-
-                    val dialog: AlertDialog = builder.create()
-                    dialog.show()
+                    }.create().show()
                 }
             }
     }
 
     private fun showAutoStartDialog(context: Context) {
-        // Controlla se il permesso di avvio automatico è disponibile
-        val autoStartPermissionHelper = AutoStartPermissionHelper.getInstance()
-        if (autoStartPermissionHelper.isAutoStartPermissionAvailable(
-                context,
-                true
-            )
+        if (AutoStartPermissionHelper.getInstance()
+                .isAutoStartPermissionAvailable(context, false)
         ) {
-            AlertDialog.Builder(context)
-                .setTitle("Avvio automatico")
-                .setMessage(
-                    "Per funzionare correttamente è necessario che l'app abbia il permesso di eseguire in background."
-                )
-                // Apri la pagina di DontKillMyApp
-                .setNeutralButton("Informazioni") { dialog, _ ->
+            AlertDialog.Builder(context).apply {
+                setTitle("Don't kill my app!")
+                setMessage("Per funzionare correttamente è necessario che l'app possa eseguire in background.")
+                setNeutralButton("Scopri come fare") { dialog, _ ->
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse("https://dontkillmyapp.com")
                         addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
@@ -120,19 +111,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     startActivity(Intent.createChooser(intent, "Apri con"))
                     dialog.dismiss()
                 }
-                // Apri impostazioni esecuzione in background
-                .setPositiveButton("Ok") { dialog, _ ->
-                    autoStartPermissionHelper.getAutoStartPermission(
-                        context,
-                        true
-                    )
-                    dialog.dismiss()
-                }
-                .show()
-        } else {
-            Toast.makeText(context, "Non disponibile per questo dispositivo", Toast.LENGTH_SHORT)
-                .show()
+            }.create().show()
+            return
         }
+        Toast.makeText(context, "Non necessario per questo dispositivo", Toast.LENGTH_SHORT)
+            .show()
     }
 
     // Toolbar menu
