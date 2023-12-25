@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 
 class AlarmPermissionChangedReceiver : BroadcastReceiver() {
 
