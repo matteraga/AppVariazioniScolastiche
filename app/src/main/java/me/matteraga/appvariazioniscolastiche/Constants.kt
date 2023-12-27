@@ -1,7 +1,9 @@
 package me.matteraga.appvariazioniscolastiche
 
+const val NOTIFICATION_CHANNEL_ID = "changes"
+
 object ChangesToCheck {
-    val TODAY = 0
-    val TOMORROW = 1
-    val TODAY_AND_TOMORROW = 2
+    const val TODAY = 0
+    const val TOMORROW = 1
+    const val TODAY_AND_TOMORROW = 2
 }

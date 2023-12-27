@@ -13,6 +13,7 @@ import com.itextpdf.text.pdf.PdfGState
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.PdfStamper
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
+import me.matteraga.appvariazioniscolastiche.NOTIFICATION_CHANNEL_ID
 import me.matteraga.appvariazioniscolastiche.R
 import me.matteraga.appvariazioniscolastiche.utilities.NotificationUtils
 import me.matteraga.appvariazioniscolastiche.utilities.StorageUtils
@@ -50,7 +51,7 @@ class CheckChangesWorker(
         setForeground(
             ForegroundInfo(
                 Random.nextInt(),
-                NotificationCompat.Builder(context, "changes")
+                NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_search)
                     .setContentTitle("Controllo le variazioni...")
                     .setProgress(0, 0, true)

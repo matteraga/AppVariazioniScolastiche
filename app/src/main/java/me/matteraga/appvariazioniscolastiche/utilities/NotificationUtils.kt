@@ -10,6 +10,7 @@ import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import me.matteraga.appvariazioniscolastiche.NOTIFICATION_CHANNEL_ID
 import me.matteraga.appvariazioniscolastiche.activities.MainActivity
 import java.time.LocalDate
 
@@ -30,6 +31,33 @@ class NotificationUtils(private val context: Context) {
         }
     }
 
+    // Notifica base
+    private fun sendBaseNotification(
+        id: Int,
+        title: String,
+        text: String,
+        icon: Int,
+        intent: Intent
+    ) {
+        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID).apply {
+            setSmallIcon(icon)
+            setContentTitle(title)
+            setContentText(text)
+            priority = NotificationCompat.PRIORITY_DEFAULT
+            setContentIntent(
+                PendingIntent.getActivity(
+                    context,
+                    id,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            )
+            setAutoCancel(true)
+        }.build()
+
+        sendNotification(notification, id)
+    }
+
     // Invia una notifica che se cliccata apre il pdf
     fun sendPdfNotification(uri: Uri, date: LocalDate, title: String, text: String, icon: Int) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -37,22 +65,7 @@ class NotificationUtils(private val context: Context) {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
         }
-        val pending = PendingIntent.getActivity(
-            context,
-            date.hashCode(),
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        val builder = NotificationCompat.Builder(context, "changes").apply {
-            setSmallIcon(icon)
-            setContentTitle(title)
-            setContentText(text)
-            priority = NotificationCompat.PRIORITY_DEFAULT
-            setContentIntent(pending)
-            setAutoCancel(true)
-        }
-
-        sendNotification(builder.build(), date.hashCode())
+        sendBaseNotification(date.hashCode(), title, text, icon, intent)
     }
 
     // Invia una notifica che se cliccata apre il browser
@@ -67,22 +80,7 @@ class NotificationUtils(private val context: Context) {
             data = Uri.parse(url)
             addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
         }
-        val pending = PendingIntent.getActivity(
-            context,
-            date.hashCode(),
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        val builder = NotificationCompat.Builder(context, "changes").apply {
-            setSmallIcon(icon)
-            setContentTitle(title)
-            setContentText(text)
-            priority = NotificationCompat.PRIORITY_DEFAULT
-            setContentIntent(pending)
-            setAutoCancel(true)
-        }
-
-        sendNotification(builder.build(), date.hashCode())
+        sendBaseNotification(date.hashCode(), title, text, icon, intent)
     }
 
     // Invia una notifica che se cliccata apre l'app
@@ -95,21 +93,6 @@ class NotificationUtils(private val context: Context) {
         val intent = Intent(context, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
-        val pending = PendingIntent.getActivity(
-            context,
-            date.hashCode(),
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        val builder = NotificationCompat.Builder(context, "changes").apply {
-            setSmallIcon(icon)
-            setContentTitle(title)
-            setContentText(text)
-            priority = NotificationCompat.PRIORITY_DEFAULT
-            setContentIntent(pending)
-            setAutoCancel(true)
-        }
-
-        sendNotification(builder.build(), date.hashCode())
+        sendBaseNotification(date.hashCode(), title, text, icon, intent)
     }
 }

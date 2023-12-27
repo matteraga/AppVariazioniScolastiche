@@ -309,7 +309,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // Gestisce il permesso per le allarmi precise, solo per Android >= 12
         val exactAlarmsPreference = findPreference<Preference>("exactAlarms")
         // Gestisce l'attivazione delle allarmi precise, solo per Android >= 12
-        val useExactAlarmsPreference = findPreference<Preference>("useExactAlarms")
+        val useExactAlarmsPreference = findPreference<SwitchPreferenceCompat>("useExactAlarms")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             exactAlarmsPreference?.setOnPreferenceClickListener {
                 val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
@@ -386,7 +386,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         // Aggiorna se il permesso per le allarmi precise è concesso o meno, attiva o disattiva lo switch, solo per Android >= 12
         val exactAlarmsPreference = findPreference<Preference>("exactAlarms")
-        val useExactAlarmsPreference = findPreference<Preference>("useExactAlarms")
+        val useExactAlarmsPreference = findPreference<SwitchPreferenceCompat>("useExactAlarms")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             exactAlarmsPreference?.summary =
                 if (context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()) {
@@ -394,6 +394,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     "Concesso"
                 } else {
                     useExactAlarmsPreference?.isEnabled = false
+                    useExactAlarmsPreference?.isChecked = false
                     "Negato"
                 }
         }

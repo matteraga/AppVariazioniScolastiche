@@ -5,6 +5,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import me.matteraga.appvariazioniscolastiche.NOTIFICATION_CHANNEL_ID
 import me.matteraga.appvariazioniscolastiche.R
 import me.matteraga.appvariazioniscolastiche.utilities.StorageUtils
 import kotlin.random.Random
@@ -21,7 +22,7 @@ class DeletePdfsWorker(
         setForeground(
             ForegroundInfo(
                 Random.nextInt(),
-                NotificationCompat.Builder(context, "changes")
+                NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_auto_delete)
                     .setContentTitle("Eliminazione in corso...")
                     .setProgress(0, 0, true)

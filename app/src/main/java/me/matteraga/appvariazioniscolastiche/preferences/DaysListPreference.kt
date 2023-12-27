@@ -46,6 +46,6 @@ class DaysListPreference : ListPreference {
                 dialog.dismiss()
             }
             setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-        }.show()
+        }.create().show()
     }
 }
