@@ -55,23 +55,13 @@
             android:name=".alarmmanager.AlarmReceiver"
             android:exported="false" />
         <receiver
-            android:name=".alarmmanager.BootReceiver"
+            android:name=".alarmmanager.RescheduleAlarmReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".alarmmanager.TimeChangeReceiver"
-            android:exported="false">
-            <intent-filter>
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".alarmmanager.AlarmPermissionChangedReceiver"
-            android:exported="false">
         </receiver>
     </application>
 </manifest>
