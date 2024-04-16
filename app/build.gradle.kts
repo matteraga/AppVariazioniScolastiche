@@ -45,6 +45,8 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.5")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.5")
 
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

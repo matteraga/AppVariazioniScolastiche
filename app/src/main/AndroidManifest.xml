@@ -16,11 +16,14 @@
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
+
             <category android:name="android.intent.category.BROWSABLE" />
+
             <data android:scheme="https" />
         </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
+
             <data android:mimeType="application/pdf" />
         </intent>
     </queries>
@@ -31,16 +34,19 @@
         android:icon="@mipmap/ic_launcher"
         android:label="AppVariazioni"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppVariazioniScolastiche"
+        android:theme="@style/Theme.App.Starting"
         tools:targetApi="33">
+
         <activity
             android:name=".activities.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -64,4 +70,5 @@
             </intent-filter>
         </receiver>
     </application>
+
 </manifest>
