@@ -2,8 +2,8 @@ package me.matteraga.appvariazioniscolastiche
 
 const val NOTIFICATION_CHANNEL_ID = "changes"
 
-const val GITHUB_RELEASES_URL = "https://github.com/matteraga/action-test/releases"
-const val GITHUB_API_LATEST_RELEASE_URL = "https://api.github.com/repos/matteraga/action-test/releases/latest"
+const val GITHUB_RELEASES_URL = "https://github.com/matteraga/AppVariazioniScolastiche/releases"
+const val GITHUB_API_LATEST_RELEASE_URL = "https://api.github.com/repos/matteraga/AppVariazioniScolastiche/releases/latest"
 
 object ChangesToCheck {
     const val TODAY = 0
