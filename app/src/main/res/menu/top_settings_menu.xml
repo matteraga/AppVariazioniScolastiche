@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/checkForNewRelease"
+        android:icon="@drawable/ic_sync"
+        android:title="Controlla se ci sono aggiornamenti"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/autoStart"
         android:icon="@drawable/ic_autoplay"
         android:title="Avvio automatico"

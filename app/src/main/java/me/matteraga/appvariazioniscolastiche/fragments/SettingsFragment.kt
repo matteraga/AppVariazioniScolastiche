@@ -22,6 +22,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -31,13 +32,24 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.judemanutd.autostarter.AutoStartPermissionHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import me.matteraga.appvariazioniscolastiche.BuildConfig
 import me.matteraga.appvariazioniscolastiche.ChangesToCheck
+import me.matteraga.appvariazioniscolastiche.GITHUB_API_LATEST_RELEASE_URL
+import me.matteraga.appvariazioniscolastiche.GITHUB_RELEASES_URL
 import me.matteraga.appvariazioniscolastiche.R
 import me.matteraga.appvariazioniscolastiche.alarmmanager.AlarmScheduler
 import me.matteraga.appvariazioniscolastiche.preferences.DaysListPreference
 import me.matteraga.appvariazioniscolastiche.utilities.StorageUtils
 import me.matteraga.appvariazioniscolastiche.workers.CheckChangesWorker
 import me.matteraga.appvariazioniscolastiche.workers.DeletePdfsWorker
+import net.swiftzer.semver.SemVer
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import org.json.JSONObject
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
@@ -96,6 +108,100 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
     }
 
+    private suspend fun requestLatestRelease(): Result<Response> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val client = OkHttpClient()
+                val request = Request.Builder()
+                    .header("Accept", "application/vnd.github.v3+json")
+                    .header("X-GitHub-Api-Version", "2022-11-28")
+                    .url(GITHUB_API_LATEST_RELEASE_URL)
+                    .build()
+                val response = client.newCall(request).execute()
+                return@withContext Result.success(response)
+            } catch (th: Throwable) {
+                return@withContext Result.failure(th)
+            }
+        }
+    }
+
+    private fun showNewReleaseErrorDialog(context: Context) {
+        AlertDialog.Builder(context).apply {
+            setTitle("Errore")
+            setMessage("Impossibile controllare gli aggiornamenti.")
+            setNeutralButton("Apri GitHub") { dialog, _ ->
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse(GITHUB_RELEASES_URL)
+                    addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                }
+                startActivity(Intent.createChooser(intent, "Apri con"))
+                dialog.dismiss()
+            }
+            setPositiveButton("Ok") { dialog, _ ->
+                dialog.dismiss()
+            }
+        }.create().show()
+    }
+
+    private fun checkForNewRelease(context: Context) {
+        Toast.makeText(context, "Controllo aggiornamenti...", Toast.LENGTH_SHORT).show()
+
+        lifecycleScope.launch {
+            val result = requestLatestRelease()
+            if (result.isFailure) {
+                showNewReleaseErrorDialog(context)
+                return@launch
+            }
+
+            val release = result.getOrNull()
+            if (release == null || !release.isSuccessful) {
+                showNewReleaseErrorDialog(context)
+                return@launch
+            }
+
+            try {
+                val json = JSONObject(release.body?.string() ?: "")
+
+                val currentVersion = SemVer.parse(BuildConfig.VERSION_NAME)
+                val newVersion = SemVer.parse(json.getString("tag_name"))
+
+                if (currentVersion >= newVersion) {
+                    AlertDialog.Builder(context).apply {
+                        setTitle("Nessun aggiornamento disponibile")
+                        setMessage("Sei già aggiornato alla versione più recente.")
+                        setNeutralButton("Ok") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                    }.create().show()
+                } else {
+                    AlertDialog.Builder(context).apply {
+                        setTitle("Aggiornamento disponibile")
+                        setMessage(
+                            "Versione:\n${json.getString("tag_name")}\n\n" +
+                                    "Descrizione:\n${json.getString("body")}\n\n" +
+                                    "Pubblicazione:\n${
+                                        json.getString("published_at").split("T")[0]
+                                    }"
+                        )
+                        setPositiveButton("Scarica aggiornamento") { dialog, _ ->
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse(json.getString("html_url"))
+                                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                            }
+                            startActivity(Intent.createChooser(intent, "Apri con"))
+                            dialog.dismiss()
+                        }
+                        setNegativeButton("Annulla") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                    }.create().show()
+                }
+            } catch (th: Throwable) {
+                showNewReleaseErrorDialog(context)
+            }
+        }
+    }
+
     private fun showAutoStartDialog(context: Context) {
         if (AutoStartPermissionHelper.getInstance()
                 .isAutoStartPermissionAvailable(context, false)
@@ -130,6 +236,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 when (menuItem.itemId) {
+                    R.id.checkForNewRelease -> checkForNewRelease(context)
                     R.id.autoStart -> showAutoStartDialog(context)
                 }
                 return true

@@ -7,12 +7,16 @@ android {
     namespace = "me.matteraga.appvariazioniscolastiche"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "me.matteraga.appvariazioniscolastiche"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -55,6 +59,10 @@ dependencies {
     implementation("com.itextpdf:itextg:5.5.10")
 
     implementation("com.github.judemanutd:autostarter:1.1.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+
+    implementation("net.swiftzer.semver:semver:2.0.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
