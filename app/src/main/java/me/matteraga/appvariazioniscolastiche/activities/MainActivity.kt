@@ -3,12 +3,15 @@ package me.matteraga.appvariazioniscolastiche.activities
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import me.matteraga.appvariazioniscolastiche.R
 
 class MainActivity : AppCompatActivity(),
@@ -16,8 +19,19 @@ class MainActivity : AppCompatActivity(),
 
     private lateinit var appBarConfiguration: AppBarConfiguration
 
+    private var isLoading = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        lifecycleScope.launch {
+            delay(100)
+            isLoading = false
+        }
+
+        installSplashScreen().apply {
+            setKeepOnScreenCondition {
+                isLoading
+            }
+        }
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
